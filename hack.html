@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion's Pillars of Creation</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --bg: #f3f4f6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header { background: #fff; border-bottom: 1px solid #e5e7eb; display: none; }
+        header.visible { display: block; }
+
+        nav {
+            width: 90%;
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 0;
+        }
+
+        .logo { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
+        nav ul { display: flex; gap: 1.25rem; list-style: none; }
+
+        nav button {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text);
+            cursor: pointer;
+            padding: .25rem 0;
+            border-bottom: 2px solid transparent;
+        }
+
+        nav button:hover { color: var(--primary); }
+        nav button.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        main { flex: 1; display: flex; }
+        .page { display: none; width: 100%; animation: fade .35s ease; }
+        .page.active { display: flex; }
+
+        @keyframes fade {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        .center { margin: auto; width: 90%; max-width: 650px; text-align: center; padding: 3rem 0; }
+        .center.wide { max-width: 950px; }
+
+        #page-1 { background: linear-gradient(135deg, #2563eb, #7c3aed); color: #fff; }
+        #page-1 h1 { font-size: 3rem; margin-bottom: 1rem; }
+        #page-1 p { font-size: 1.2rem; margin-bottom: 2rem; opacity: .95; }
+
+        .btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: .85rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform .2s, background .2s;
+        }
+        .btn:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        .btn.small { padding: .55rem 1.1rem; font-size: .9rem; }
+        .btn.secondary { background: #e5e7eb; color: var(--text); }
+        .btn.secondary:hover { background: #d1d5db; }
+        #page-1 .btn { background: #fff; color: var(--primary); }
+        #page-1 .btn:hover { background: #f3f4f6; }
+
+        .box {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, .07);
+            padding: 2.5rem;
+            text-align: left;
+        }
+        .box h2 { margin-bottom: 1rem; }
+        .box p { color: var(--muted); margin-bottom: 1rem; }
+
+        .actions { display: flex; gap: .75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+
+        .person-strip {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: .5rem;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .person-strip strong { font-size: 1.1rem; }
+        .person-strip span { color: var(--muted); font-size: .95rem; }
+
+        .controls { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; }
+        .conn-status { font-size: .9rem; color: var(--muted); display: flex; align-items: center; gap: .4rem; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #9ca3af; }
+        .dot.live { background: #22c55e; }
+
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem; }
+        .metric { border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.25rem; min-width: 0; }
+        .metric h3 { font-size: 1rem; color: var(--muted); font-weight: 600; margin-bottom: .25rem; }
+        .reading { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .reading .value { font-size: 2.4rem; font-weight: 700; line-height: 1.1; }
+        .reading .unit { color: var(--muted); font-weight: 500; }
+        .badge { color: #fff; font-size: .8rem; font-weight: 600; padding: .2rem .65rem; border-radius: 999px; background: #9ca3af; }
+
+        .meter { position: relative; display: flex; height: 14px; border-radius: 7px; overflow: hidden; margin: 0 0 .4rem; }
+        .meter div.zone { height: 100%; }
+        .marker { position: absolute; top: -4px; width: 4px; height: 22px; background: #111827; border-radius: 2px; left: 0; transition: left .4s; display: none; }
+        .meter-wrap { position: relative; }
+        .legend { display: flex; flex-wrap: wrap; gap: .3rem .9rem; font-size: .75rem; color: var(--muted); margin-bottom: 1.25rem; }
+        .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: .3rem; }
+        .chart-title { font-size: .85rem; color: var(--muted); margin-bottom: .4rem; }
+        .chart { display: flex; align-items: flex-end; gap: 6px; height: 170px; padding: 1.4rem .5rem 0; background: #f9fafb; border-radius: 8px; border-bottom: 2px solid #e5e7eb; }
+        .bar { flex: 1; position: relative; min-width: 0; min-height: 3px; border-radius: 4px 4px 0 0; background: #e5e7eb; transition: height .4s, background .4s; }
+        .bar::after { content: attr(data-v); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); font-size: .65rem; color: var(--muted); white-space: nowrap; }
+        .bar.latest { outline: 2px solid #111827; outline-offset: 1px; }
+
+        .info-row { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem 0; border-bottom: 1px solid #e5e7eb; }
+        .info-row span:first-child { font-weight: 600; }
+        .info-row span:last-child { color: var(--muted); text-align: right; overflow-wrap: anywhere; }
+        .summary-heading { margin: 1.5rem 0 .25rem; font-size: 1rem; color: var(--primary); }
+        .summary-heading:first-child { margin-top: 0; }
+        .note { font-size: .88rem; color: var(--muted); margin-top: .8rem; }
+        footer { text-align: center; color: var(--muted); padding: 1rem; font-size: .9rem; }
+
+        @media (max-width: 520px) {
+            .box { padding: 1.5rem; }
+            nav ul { gap: .8rem; }
+            nav { align-items: flex-start; flex-direction: column; }
+            .info-row { gap: .5rem; }
+        }
+    </style>
+</head>
+<body>
+    <header id="site-header">
+        <nav>
+            <span class="logo">Orions Pillars of Creation</span>
+            <ul>
+                <li><button data-page="2">Regulations</button></li>
+                <li><button data-page="3">Your Data</button></li>
+                <li><button data-page="4">Help</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Welcome page -->
+        <section class="page active" id="page-1">
+            <div class="center">
+                <h1>DutchOven</h1>
+                <p>Welcome</p>
+                <button class="btn" onclick="showPage(2)">Enter</button>
+            </div>
+        </section>
+
+        <!-- Page 2: OSHA guidelines -->
+        <section class="page" id="page-2">
+            <div class="center">
+                <div class="box">
+                    <h2>Hello!</h2>
+                    <p>OSHA rules here</p>
+                    <p>More safety information can go here.</p>
+                    <div class="actions">
+                        <button class="btn secondary" onclick="showPage(1)">Back</button>
+                        <button class="btn" onclick="showPage(3)">Continue</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Page 3: Live exposure data -->
+        <section class="page" id="page-3">
+            <div class="center wide">
+                <div class="box">
+                    <h2>Exposure Levels</h2>
+                    <p>Measurements are retrieved from the dataset for the configured worker and device.</p>
+
+                    <div class="person-strip">
+                        <div><strong id="person-name"></strong></div>
+                        <span id="person-meta"></span>
+                    </div>
+
+                    <div class="controls">
+                        <button class="btn small" id="live-btn" onclick="toggleLive()">Live updates</button>
+                        <button class="btn small secondary" onclick="fetchReadings()">Refresh Now</button>
+                        <button class="btn small secondary" id="demo-btn" onclick="toggleDemo()">Start demo data</button>
+                        <span class="conn-status"><span class="dot" id="conn-dot"></span><span id="conn-text">Not connected</span></span>
+                    </div>
+
+                    <div class="metrics">
+                        <!-- Temperature -->
+                        <div class="metric">
+                            <h3>Temperature</h3>
+                            <div class="reading">
+                                <span class="value" id="temp-value">--</span>
+                                <span class="unit">°C</span>
+                                <span class="badge" id="temp-badge">Waiting for data</span>
+                            </div>
+                            <div class="meter-wrap">
+                                <div class="meter" id="temp-meter"></div>
+                                <div class="marker" id="temp-marker"></div>
+                            </div>
+                            <div class="legend" id="temp-legend"></div>
+                            <div class="chart-title">Recent readings</div>
+                            <div class="chart" id="temp-chart"></div>
+                        </div>
+
+                        <!-- Air quality sensor -->
+                        <div class="metric">
+                            <h3>Air Quality</h3>
+                            <div class="reading">
+                                <span class="value" id="air-value">--</span>
+                                <span class="unit">raw</span>
+                                <span class="badge" id="air-badge">Waiting for data</span>
+                            </div>
+                            <div class="meter-wrap">
+                                <div class="meter" id="air-meter"></div>
+                                <div class="marker" id="air-marker"></div>
+                            </div>
+                            <div class="legend" id="air-legend"></div>
+                            <div class="chart-title">Recent readings</div>
+                            <div class="chart" id="air-chart"></div>
+                            <p class="note">This is a raw sensor value, not a chemical concentration or an AQI measurement.</p>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button class="btn secondary" onclick="showPage(2)">Back</button>
+                        <button class="btn" onclick="showPage(4)">View Help</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Page 4: Exposure summary -->
+        <section class="page" id="page-4">
+            <div class="center">
+                <div class="box">
+                    <h2>Exposure Summary</h2>
+                    <div id="output"></div>
+                    <div class="actions">
+                        <button class="btn secondary" onclick="showPage(3)">Back to Live Data</button>
+                        <button class="btn" onclick="startOver()">Start Over</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>Exposure Monitor</footer>
+
+    <script>
+        // These IDs must match the worker and device in the dataset.
+        const WORKER_ID = "W-0101";
+        const DEVICE_ID = "D-0001";
+
+        // Match the response field names returned by the FastAPI endpoint.
+        const FIELDS = {
+            worker: "workedId",
+            device: "deviceId",
+            temp: "temperatureC",
+            air: "airSignalRaw"
+        };
+
+        const API = {
+            baseUrl: "/api/readings",
+            pollMs: 5000
+        };
+
+        const AIR_RAW_MAX = 1023;
+        const BARS_SHOWN = 12;
+        const MAX_STORED = 500;
+
+        const METRICS = {
+            temp: {
+                label: "Temperature", unit: "°C", max: 50, decimals: 1,
+                zones: [
+                    { to: 15, label: "Cool", color: "#3b82f6", sev: 1 },
+                    { to: 27, label: "Comfortable", color: "#22c55e", sev: 0 },
+                    { to: 32, label: "Warm", color: "#eab308", sev: 1 },
+                    { to: 38, label: "Hot", color: "#f97316", sev: 2 },
+                    { to: 50, label: "Dangerous", color: "#ef4444", sev: 3 }
+                ]
+            },
+            air: {
+                label: "Air sensor signal (raw)", unit: "raw", max: AIR_RAW_MAX,
+                decimals: 0, zones: null, color: "#0891b2"
+            }
+        };
+
+        let readings = [];
+        let liveTimer = null;
+        let demoTimer = null;
+        let demoTemp = 26;
+        let demoAir = 400;
+
+        function esc(value) {
+            const element = document.createElement("div");
+            element.textContent = String(value ?? "");
+            return element.innerHTML;
+        }
+
+        function clamp(value, low, high) {
+            return Math.min(high, Math.max(low, value));
+        }
+
+        function getZone(key, value) {
+            const zones = METRICS[key].zones;
+            for (const zone of zones) {
+                if (value <= zone.to) return zone;
+            }
+            return zones[zones.length - 1];
+        }
+
+        function showPage(number) {
+            document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+            document.getElementById("page-" + number).classList.add("active");
+            document.getElementById("site-header").classList.toggle("visible", number !== 1);
+            document.querySelectorAll("nav button").forEach(button => {
+                button.classList.toggle("active", Number(button.dataset.page) === number);
+            });
+            window.scrollTo(0, 0);
+        }
+
+        document.querySelectorAll("nav button").forEach(button => {
+            button.addEventListener("click", () => showPage(Number(button.dataset.page)));
+        });
+
+        function buildMeter(key) {
+            const metric = METRICS[key];
+            const meter = document.getElementById(key + "-meter");
+            const legend = document.getElementById(key + "-legend");
+            meter.innerHTML = "";
+            legend.innerHTML = "";
+
+            if (metric.zones) {
+                let previous = 0;
+                metric.zones.forEach(zone => {
+                    const segment = document.createElement("div");
+                    segment.className = "zone";
+                    segment.style.width = ((zone.to - previous) / metric.max * 100) + "%";
+                    segment.style.background = zone.color;
+                    meter.appendChild(segment);
+                    previous = zone.to;
+
+                    const item = document.createElement("span");
+                    item.innerHTML = '<i style="background:' + zone.color + '"></i>' + esc(zone.label);
+                    legend.appendChild(item);
+                });
+            } else {
+                meter.style.background = "linear-gradient(90deg, #cffafe, " + metric.color + ")";
+                legend.textContent = "Scale: 0 to " + metric.max + " raw sensor units. Relative reading only.";
+            }
+        }
+
+        function relativeLabel(key) {
+            const metric = METRICS[key];
+            const recent = readings.slice(-BARS_SHOWN);
+            if (recent.length < 3) return "Limited history";
+
+            const newest = recent[recent.length - 1][key];
+            const previousValues = recent.slice(0, -1).map(reading => reading[key]);
+            const average = previousValues.reduce((sum, value) => sum + value, 0) / previousValues.length;
+            const band = Math.max(average * 0.1, metric.max * 0.02);
+
+            if (newest > average + band) return "Above recent average";
+            if (newest < average - band) return "Below recent average";
+            return "Near recent average";
+        }
+
+        function renderMetric(key) {
+            const metric = METRICS[key];
+            const last = readings[readings.length - 1];
+            const valueElement = document.getElementById(key + "-value");
+            const badge = document.getElementById(key + "-badge");
+            const marker = document.getElementById(key + "-marker");
+
+            if (!last) {
+                valueElement.textContent = "--";
+                badge.textContent = "Waiting for data";
+                badge.style.background = "#9ca3af";
+                marker.style.display = "none";
+            } else {
+                const value = last[key];
+                valueElement.textContent = value.toFixed(metric.decimals);
+                marker.style.display = "block";
+                marker.style.left = "calc(" + clamp(value / metric.max * 100, 0, 100) + "% - 2px)";
+
+                if (metric.zones) {
+                    const zone = getZone(key, value);
+                    badge.textContent = zone.label;
+                    badge.style.background = zone.color;
+                } else {
+                    badge.textContent = relativeLabel(key);
+                    badge.style.background = "#64748b";
+                }
+            }
+
+            const chart = document.getElementById(key + "-chart");
+            const recent = readings.slice(-BARS_SHOWN);
+            const slots = Array(BARS_SHOWN - recent.length).fill(null).concat(recent);
+            chart.innerHTML = "";
+
+            slots.forEach((reading, index) => {
+                const bar = document.createElement("div");
+                bar.className = "bar";
+                if (reading) {
+                    const value = reading[key];
+                    bar.style.height = clamp(value / metric.max * 100, 2, 100) + "%";
+                    bar.style.background = metric.zones ? getZone(key, value).color : metric.color;
+                    bar.dataset.v = value.toFixed(metric.decimals);
+                    if (index === slots.length - 1) bar.classList.add("latest");
+                } else {
+                    bar.style.height = "2%";
+                }
+                chart.appendChild(bar);
+            });
+        }
+
+        function renderLive() {
+            renderMetric("temp");
+            renderMetric("air");
+        }
+
+        function stats(key) {
+            const values = readings.map(reading => reading[key]);
+            const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+            const output = {
+                avg: average,
+                peak: Math.max(...values),
+                low: Math.min(...values)
+            };
+
+            if (METRICS[key].zones) {
+                const risky = values.filter(value => getZone(key, value).sev >= 2).length;
+                output.riskyPct = Math.round(risky / values.length * 100);
+            }
+            return output;
+        }
+
+        function row(label, value) {
+            return '<div class="info-row"><span>' + label + '</span><span>' + value + '</span></div>';
+        }
+
+        function renderSummary() {
+            const output = document.getElementById("output");
+            let html = '<h3 class="summary-heading">Worker and device</h3>';
+            html += row("Worker ID", esc(WORKER_ID));
+            html += row("Device ID", esc(DEVICE_ID));
+
+            if (readings.length === 0) {
+                html += '<p style="margin-top:1.5rem">No readings found for this worker and device. Check the dataset or start demo data.</p>';
+                output.innerHTML = html;
+                return;
+            }
+
+            const last = readings[readings.length - 1];
+            const temperatureStats = stats("temp");
+            const airStats = stats("air");
+            const heat = getZone("temp", last.temp);
+
+            html += '<h3 class="summary-heading">Latest reading</h3>';
+            html += row("Readings loaded", readings.length);
+            html += row("Heat level (from temperature)", '<b style="color:' + heat.color + '">' + heat.label + '</b>');
+
+            html += '<h3 class="summary-heading">Temperature</h3>';
+            html += row("Latest", last.temp.toFixed(1) + " °C (" + heat.label + ")");
+            html += row("Average", temperatureStats.avg.toFixed(1) + " °C");
+            html += row("Highest", temperatureStats.peak.toFixed(1) + " °C");
+            html += row("Lowest", temperatureStats.low.toFixed(1) + " °C");
+            html += row("Readings in hot range (Hot or above)", temperatureStats.riskyPct + "%");
+
+            html += '<h3 class="summary-heading">Air sensor signal (raw)</h3>';
+            html += row("Latest", last.air.toFixed(0) + " raw");
+            html += row("Average", airStats.avg.toFixed(0) + " raw");
+            html += row("Highest", airStats.peak.toFixed(0) + " raw");
+            html += row("Lowest", airStats.low.toFixed(0) + " raw");
+            html += '<p class="note">The air sensor signal is a raw number from the sensor. It is not a chemical concentration or an AQI, so it cannot determine how much of a substance a worker was exposed to.</p>';
+
+            output.innerHTML = html;
+        }
+
+        function apiUrl() {
+            return API.baseUrl +
+                "?" + encodeURIComponent(FIELDS.worker) + "=" + encodeURIComponent(WORKER_ID) +
+                "&" + encodeURIComponent(FIELDS.device) + "=" + encodeURIComponent(DEVICE_ID);
+        }
+
+        function setStatus(message, live) {
+            document.getElementById("conn-text").textContent = message;
+            document.getElementById("conn-dot").classList.toggle("live", Boolean(live));
+        }
+
+        // Replace the displayed data with readings returned by FastAPI.
+        function loadReadings(list) {
+            readings = list
+                .filter(item => item[FIELDS.temp] != null && item[FIELDS.air] != null)
+                .map(item => ({
+                    worker: item[FIELDS.worker],
+                    device: item[FIELDS.device],
+                    temp: Number(item[FIELDS.temp]),
+                    air: Number(item[FIELDS.air])
+                }))
+                .filter(item => Number.isFinite(item.temp) && Number.isFinite(item.air))
+                .filter(item => (item.worker == null || String(item.worker) === WORKER_ID) &&
+                                (item.device == null || String(item.device) === DEVICE_ID))
+                .slice(-MAX_STORED);
+
+            renderLive();
+            renderSummary();
+            return readings.length;
+        }
+
+        async function fetchReadings() {
+            if (demoTimer) return; // Do not replace demo readings with dataset data.
+
+            try {
+                const response = await fetch(apiUrl(), { cache: "no-store" });
+                if (!response.ok) throw new Error("HTTP " + response.status);
+                const data = await response.json();
+                const list = Array.isArray(data) ? data : data.readings;
+                if (!Array.isArray(list)) throw new Error("Unexpected response format");
+
+                const kept = loadReadings(list);
+                if (list.length > 0 && kept === 0) {
+                    setStatus("Data returned, but the worker/device IDs or field names did not match", false);
+                } else if (list.length === 0) {
+                    setStatus("No dataset readings found", false);
+                } else {
+                    setStatus("Dataset connected", true);
+                }
+            } catch (error) {
+                setStatus("Can't load data: " + error.message, false);
+            }
+        }
+
+        function startLive() {
+            if (liveTimer) return;
+            fetchReadings();
+            liveTimer = setInterval(fetchReadings, API.pollMs);
+            document.getElementById("live-btn").textContent = "Pause live updates";
+        }
+
+        function stopLive() {
+            if (liveTimer) clearInterval(liveTimer);
+            liveTimer = null;
+            document.getElementById("live-btn").textContent = "Resume live updates";
+            setStatus("Live updates paused", false);
+        }
+
+        function toggleLive() {
+            if (demoTimer) return;
+            if (liveTimer) stopLive();
+            else startLive();
+        }
+
+        function addReading(temp, air) {
+            readings.push({ worker: WORKER_ID, device: DEVICE_ID, temp, air });
+            if (readings.length > MAX_STORED) readings.shift();
+            renderLive();
+            renderSummary();
+        }
+
+        function clearReadings() {
+            readings = [];
+            renderLive();
+            renderSummary();
+        }
+
+        function toggleDemo() {
+            if (demoTimer) {
+                stopDemo();
+                clearReadings();
+                startLive();
+                return;
+            }
+
+            stopLive();
+            clearReadings();
+            demoTimer = setInterval(() => {
+                demoTemp = clamp(demoTemp + (Math.random() - 0.5) * 2.5, 8, 46);
+                demoAir = clamp(demoAir + (Math.random() - 0.5) * 60, 80, AIR_RAW_MAX - 70);
+                addReading(demoTemp, demoAir);
+            }, 1500);
+            document.getElementById("demo-btn").textContent = "Stop demo data";
+            setStatus("Demo data running", true);
+        }
+
+        function stopDemo() {
+            if (demoTimer) clearInterval(demoTimer);
+            demoTimer = null;
+            document.getElementById("demo-btn").textContent = "Start demo data";
+        }
+
+        function startOver() {
+            if (demoTimer) {
+                stopDemo();
+                clearReadings();
+                startLive();
+            }
+            showPage(1);
+        }
+
+        document.getElementById("person-name").textContent = "Worker ID: " + WORKER_ID;
+        document.getElementById("person-meta").textContent = "Device ID: " + DEVICE_ID;
+        buildMeter("temp");
+        buildMeter("air");
+        renderLive();
+        renderSummary();
+        startLive();
+    </script>
+</body>
+</html>

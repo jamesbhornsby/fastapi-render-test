@@ -1,58 +1,68 @@
 
-from datetime import datetime, timezone
+import csv
+from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Query, HTTPException
+from fastapi.responses import FileResponse
 
 app = FastAPI()
 
-
-@app.get("/", response_class=HTMLResponse)
-async def home():
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Live Clock</title>
-    </head>
-    <body>
-        <h1>Current Time</h1>
-        <p id="time">Loading...</p>
-
-        <script>
-            async function updateTime() {
-                try {
-                    const response = await fetch("/api/time");
-
-                    if (!response.ok) {
-                        throw new Error("Request failed");
-                    }
-
-                    const data = await response.json();
-
-                    document.getElementById("time").textContent =
-                        new Date(data.utc_time).toLocaleTimeString();
-
-                } catch (error) {
-                    document.getElementById("time").textContent =
-                        "Unable to retrieve time";
-                }
-            }
-
-            updateTime();
-            setInterval(updateTime, 1000);
-        </script>
-    </body>
-    </html>
-    """
+BASE_DIR = Path(__file__).resolve().parent
+HTML_FILE = BASE_DIR / "static" / "hack.html"
+DATA_FILE = BASE_DIR / "data" / "readings.csv"
 
 
-@app.get("/api/time")
-async def get_time():
-    current_time = datetime.now(timezone.utc)
+@app.get("/", include_in_schema=False)
+def home():
+    return FileResponse(HTML_FILE)
 
-    return {
-        "utc_time": current_time.isoformat()
-    }
+
+@app.get("/api/readings")
+def get_readings(
+    workedId: str = Query(...),
+    deviceId: str = Query(...),
+):
+    if not DATA_FILE.exists():
+        raise HTTPException(
+            status_code=500,
+            detail="Dataset file was not found."
+        )
+
+    results = []
+
+    with DATA_FILE.open(
+        "r", newline="", encoding="utf-8-sig"
+    ) as file:
+        reader = csv.DictReader(file)
+
+        for row in reader:
+            # Support either spelling in the source dataset.
+            worker = (
+                row.get("workedId")
+                or row.get("workerId")
+                or ""
+            ).strip()
+
+            device = (row.get("deviceId") or "").strip()
+
+            # Only return the selected worker and device.
+            if worker != workedId or device != deviceId:
+                continue
+
+            try:
+                temperature = float(row["temperatureC"])
+                air_signal = float(row["airSignalRaw"])
+            except (KeyError, TypeError, ValueError):
+                # Ignore records with missing or invalid measurements.
+                continue
+
+            results.append({
+                # These response keys match the original JavaScript.
+                "workedId": worker,
+                "deviceId": device,
+                "temperatureC": temperature,
+                "airSignalRaw": air_signal,
+                "time": (row.get("time") or "").strip(),
+            })
+
+    return results[-500:]
